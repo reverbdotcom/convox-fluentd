@@ -4,18 +4,11 @@ This service gets installed as an AWS lambda and triggers off cloudwatch log gro
 
 ## Modifying
 
-Get yer golang set up locally then modify `main.go`. After that...deploy!
-
-## Deploying
-
-The following command will compile, upload and update the AWS lambda function with your updated code.
-```
-make && make release && make deploy
-```
+Get yer golang set up locally then modify `main.go`.
 
 ## Viewing errors/logs
 
-Go to AWS > CloudWatch > Logs > Streams for /aws/lambda/reverb-staging-fluentd. 
+Go to AWS > CloudWatch > Logs > Streams for /aws/lambda/<rack-name>-fluentd.
 
 Here you will be able to see the stderr and stdout of the function as it runs.
 
