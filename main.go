@@ -52,14 +52,17 @@ func main() {
 		logs, errs := 0, 0
 		for _, e := range d.LogEvents {
 
-			fmt.Sprintf("Message %s", e)
-			event := decodeLogLine(e.Message)
+			event, err := decodeLogLine(e.Message)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error decoding log line err=%s\n", err)
+				continue
+			}
 
-			tag := fmt.Sprintf("%s", event["convox_app"])
+			tag := d.LogGroup
 
 			err = logger.Post(tag, event)
 			if err != nil {
-				fmt.Fprint(os.Stderr, "FluentD Post: %s\n", err)
+				fmt.Fprintf(os.Stderr, "FluentD Post: %s\n", err)
 				return nil, err
 			}
 		}
@@ -68,24 +71,27 @@ func main() {
 	})
 }
 
-func decodeLogLine(msg string) map[string]interface{} {
+func decodeLogLine(msg string) (map[string]interface{}, error) {
 	s := strings.Split(msg, " ")
-	log_group, event := s[0], s[1]
-
+	log_group := s[0]
+	event := strings.Join(s[1:], " ")
 	s = strings.Split(log_group, ":")
-	app, convox_metadata := s[0], s[1]
-
+	container_name, convox_metadata := s[0], s[1]
 	s = strings.Split(convox_metadata, "/")
 	release, container_id := s[0], s[1]
 
 	var decoded_json map[string]interface{}
-	json.Unmarshal([]byte(event), &decoded_json)
+	err := json.Unmarshal([]byte(event), &decoded_json)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error decoding json: %s\n", err)
+		return nil, err
+	}
 
-	decoded_json["convox_app"] = app
 	decoded_json["convox_release"] = release
+	decoded_json["container_name"] = container_name
 	decoded_json["ecs_container_id"] = container_id
 
-	return decoded_json
+	return decoded_json, nil
 }
 
 func parseURL(cf_url string) (string, int) {
