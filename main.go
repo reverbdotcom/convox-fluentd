@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -72,24 +71,13 @@ func main() {
 }
 
 func decodeLogLine(msg string) (map[string]interface{}, error) {
-	s := strings.Split(msg, " ")
-	log_group := s[0]
-	event := strings.Join(s[1:], " ")
-	s = strings.Split(log_group, ":")
-	container_name, convox_metadata := s[0], s[1]
-	s = strings.Split(convox_metadata, "/")
-	release, container_id := s[0], s[1]
-
 	var decoded_json map[string]interface{}
-	err := json.Unmarshal([]byte(event), &decoded_json)
+	err := json.Unmarshal([]byte(msg), &decoded_json)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error decoding json: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error from: '%s'\n", msg)
 		return nil, err
 	}
-
-	decoded_json["convox_release"] = release
-	decoded_json["container_name"] = container_name
-	decoded_json["ecs_container_id"] = container_id
 
 	return decoded_json, nil
 }

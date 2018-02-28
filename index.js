@@ -73,4 +73,3 @@ exports.handler = function(event, context) {
 	})+"\n");
 
 }
-
